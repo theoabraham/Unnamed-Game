@@ -1,33 +1,44 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerCommand : MonoBehaviour
 {
-    private Rigidbody2D playerRb;
-
     private float horizontal;
-    public float gravityModifier; 
-    private float moveSpeed = 10;
-    private float jumpForce = 10;
-    private bool facingRight = true;
-    private bool isOnGround = true;
+    private float speed = 8f;
+    private float jumpingPower = 8f;
+    private bool isFacingRight = true;
 
-    void Start(){
-        playerRb = GetComponent<Rigidbody2D>();
-        Physics.gravity *= gravityModifier;
+    [SerializeField] private Rigidbody2D rb;
+    [SerializeField] private Transform groundCheck;
+    [SerializeField] private LayerMask groundLayer;
+
+    void Update(){
+        horizontal = Input.GetAxisRaw("Horizontal");
+
+        if (Input.GetButtonDown("Jump") && IsGrounded()){
+            rb.velocity = new Vector2(rb.velocity.x, jumpingPower);
+        }
+
+        if (Input.GetButtonUp("Jump") && rb.velocity.y > 0f){
+            rb.velocity = new Vector2(rb.velocity.x, rb.velocity.y * 0.5f);
+        }
+
+        Flip();
     }
 
-    void Update() {
-        if (Input.GetKeyDown(KeyCode.Space) && isOnGround){
-            playerRb.velocity = new Vector2(playerRb.velocity.x, jumpForce);
-            isOnGround = false;
-        }   
+    private void FixedUpdate(){
+        rb.velocity = new Vector2(horizontal * speed, rb.velocity.y);
     }
 
-    private void OnCollisionEnter(Collision collision) {
-        if (collision.gameObject.CompareTag("Ground")) {
-            isOnGround = true;
+    private bool IsGrounded(){
+        return Physics2D.OverlapCircle(groundCheck.position, 0.2f, groundLayer);
+    }
+
+    private void Flip(){
+        if (isFacingRight && horizontal < 0f || !isFacingRight && horizontal > 0f){
+            isFacingRight = !isFacingRight;
+            Vector3 localScale = transform.localScale;
+            localScale.x *= -1f;
+            transform.localScale = localScale;
         }
     }
 }
